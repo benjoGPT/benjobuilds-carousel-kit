@@ -28,9 +28,9 @@ CSS = """
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--paper:#F7F4EC;--blue:#1756A9;--line:rgba(23,86,169,.38)}
 html,body{width:1080px;height:1440px;background:var(--paper)}
-.s{width:1080px;height:1440px;position:relative;overflow:hidden;background:var(--paper);color:var(--blue);--fg:var(--blue);--bg:var(--paper);
+.s{width:1080px;height:1440px;position:relative;overflow:hidden;background:var(--paper);color:var(--blue);--fg:var(--blue);--bg:var(--paper);--rl:rgba(23,86,169,.28);
    font-family:'Geist',sans-serif;font-weight:400;font-size:40px;line-height:1.38;-webkit-font-smoothing:antialiased}
-.s.inv{background:var(--blue);color:var(--paper);--fg:var(--paper);--bg:var(--blue)}
+.s.inv{background:var(--blue);color:var(--paper);--fg:var(--paper);--bg:var(--blue);--rl:rgba(247,244,236,.28)}
 .abs{position:absolute}
 .h{font-weight:510;letter-spacing:-0.055em;line-height:.98;text-wrap:balance}
 .out{font-weight:400;letter-spacing:.01em;line-height:1.08;color:var(--bg);-webkit-text-stroke:4px var(--fg);paint-order:stroke fill;white-space:nowrap}
@@ -42,9 +42,9 @@ html,body{width:1080px;height:1440px;background:var(--paper)}
 .tint{background:#E5E7E7}
 .inv .tint{background:#3269B1}
 .st{font-weight:650}
-.rule{position:absolute;height:2px;background:var(--fg)}  /* design B: one divider style everywhere: 2px, solid ink, full content width */
-.rule.q{background:var(--fg)}
-.vr{position:absolute;width:2px;background:var(--fg)}
+.rule{position:absolute;height:1px;background:var(--fg)}  /* the header rule */
+.rule.q{background:var(--fg);opacity:.28}  /* design B: every content divider: 1px hairline, full width, between rows only */
+.vr{position:absolute;width:1px;background:var(--fg);opacity:.28}
 .btn{display:inline-flex;align-items:center;gap:14px;background:var(--fg);color:var(--bg);font-weight:650;font-size:36px;padding:0 34px;height:88px;white-space:nowrap}
 .art{position:absolute;background-size:cover;background-repeat:no-repeat}
 .box{border:1px solid var(--fg)}
@@ -96,14 +96,14 @@ def cover(d):
 
 def bigfact(d):
     f = "".join("<div style='flex:1;%s'><div class='eb'>%s</div><div class='b' style='margin-top:14px'>%s</div></div>"
-                % ("padding-right:28px" if i == 0 else "border-left:2px solid var(--fg);padding-left:28px", a, b) for i, (a, b) in enumerate(d["facts"]))
+                % ("padding-right:28px" if i == 0 else "border-left:1px solid var(--rl);padding-left:28px", a, b) for i, (a, b) in enumerate(d["facts"]))
     size = d.get("size", 440)
     ctx = ("<div class='b' style='margin:30px 0 0 15px;font-size:44px;line-height:1.3;width:900px'>%s</div>" % d["context"]) if d.get("context") else ""
     return ("<div class='abs bigflow' style='left:%dpx;top:170px;width:960px'>" % (M - 18)
             + "<div class='h fig' style='font-size:%dpx;letter-spacing:-.075em;white-space:nowrap;line-height:.86'>%s</div>" % (size, d["figure"])
             + "<div class='h' style='margin:%dpx 0 0 15px;font-size:84px;width:920px'>%s</div>" % (d.get("gap", 56), d["statement"])
             + ctx + "</div>"
-            + "<div class='rule' style='left:%dpx;right:%dpx;top:1040px'></div><div class='abs' style='left:%dpx;right:%dpx;top:1072px;display:flex'>%s</div>" % (M, M, M, M, f))
+            + "<div class='rule q' style='left:%dpx;right:%dpx;top:1040px'></div><div class='abs' style='left:%dpx;right:%dpx;top:1072px;display:flex'>%s</div>" % (M, M, M, M, f))
 
 
 def process(d):
@@ -132,7 +132,7 @@ def source(d):
             + "<div class='abs flow' style='left:%dpx;top:%dpx;width:936px'>" % (M, top)
             + "<div class='box' style='width:%dpx;height:%dpx;overflow:hidden;background:#fff'><img src='%s%s.png' style='width:%dpx;display:block'></div>" % (w, h + 2, A, d["img"], w - 2)
             + "<div class='b' style='margin-top:34px;font-size:40px'>%s</div>" % d["body"]
-            + "".join("<div class='b' style='font-size:38px;line-height:1.3;padding:18px 0;border-top:2px solid var(--fg);%s'>%s</div>"
+            + "".join("<div class='b' style='font-size:38px;line-height:1.3;padding:18px 0;border-top:1px solid var(--rl);%s'>%s</div>"
                       % ("margin-top:30px" if i == 0 else "", p) for i, p in enumerate(d.get("points", [])))
             + "<div class='sm' style='margin-top:22px;font-size:30px;opacity:.82'>%s</div></div>" % d["credit"])
 
@@ -142,13 +142,10 @@ def stats(d):
     o = head(d["headline"])
     for i, (fig, txt) in enumerate(d["rows"]):
         y = top + i * gap
-        o += ("<div class='rule' style='left:%dpx;right:%dpx;top:%dpx'></div>"
-              "<div class='abs h num' style='left:%dpx;top:%dpx;height:%dpx;width:340px;display:flex;align-items:center;font-size:%dpx;letter-spacing:-.06em;white-space:nowrap'>%s</div>"
-              "<div class='vr' style='left:416px;top:%dpx;height:%dpx'></div>"
+        o += ("<div class='rule q' style='left:%dpx;right:%dpx;top:%dpx'></div>" % (M, M, y) if i else "") + ("<div class='abs h num' style='left:%dpx;top:%dpx;height:%dpx;width:340px;display:flex;align-items:center;font-size:%dpx;letter-spacing:-.06em;white-space:nowrap'>%s</div>"
               "<div class='abs b' style='left:452px;right:%dpx;top:%dpx;height:%dpx;display:flex;align-items:center;font-size:40px;line-height:1.3'><div>%s</div></div>") % (
-              M, M, y, M - 3, y, gap, d.get("fsize", 112), fig, y + 36, gap - 72, M, y, gap, txt)
+              M - 3, y, gap, d.get("fsize", 112), fig, M, y, gap, txt)
     yb = top + n * gap
-    o += "<div class='rule' style='left:%dpx;right:%dpx;top:%dpx'></div>" % (M, M, yb)
     if d.get("note"): o += "<div class='abs sm' style='left:%dpx;top:%dpx;width:936px;font-size:30px;opacity:.82'>%s</div>" % (M, yb + 26, d["note"])
     return o
 
@@ -158,8 +155,8 @@ def recap(d):
     n = len(d["items"]); top = 350; gap = min(300, (1180 - top) // n)  # design B: no empty band under the headline
     for i, (t, b) in enumerate(d["items"]):
         y = top + i * gap
-        o += ("<div class='rule' style='left:%dpx;right:%dpx;top:%dpx'></div><div class='abs h out' style='left:%dpx;top:%dpx;font-size:170px;line-height:1;letter-spacing:-.03em'>%d</div>"
-              "<div class='abs' style='left:236px;top:%dpx;right:%dpx'><div class='t' style='font-size:54px'>%s</div><div class='b' style='margin-top:14px;font-size:38px'>%s</div></div>") % (M, M, y, M, y + 34, i + 1, y + 40, M, t, b)
+        o += ("<div class='rule q' style='left:%dpx;right:%dpx;top:%dpx'></div>" % (M, M, y) if i else "") + ("<div class='abs h out' style='left:%dpx;top:%dpx;font-size:170px;line-height:1;letter-spacing:-.03em'>%d</div>"
+              "<div class='abs' style='left:236px;top:%dpx;right:%dpx'><div class='t' style='font-size:54px'>%s</div><div class='b' style='margin-top:14px;font-size:38px'>%s</div></div>") % (M, y + 34, i + 1, y + 40, M, t, b)
     yb = top + n * gap
     o += ("<div class='abs tint' style='left:%dpx;right:%dpx;top:%dpx;height:112px;display:flex;align-items:center;gap:18px;padding:0 32px'>%s"
           "<div class='t' style='font-size:42px'>%s</div></div>") % (M, M, yb + 20, ic("bookmark", 46, 1.5), d.get("save", "Save this for later."))
@@ -171,8 +168,8 @@ def limits(d):
     gap = d.get("gap") or max(200, min(290, (1290 - d["rows_top"]) // len(d["rows"])))
     for i, (icn, t, b) in enumerate(d["rows"]):
         y = d["rows_top"] + i * gap
-        o += ("<div class='rule' style='left:%dpx;right:%dpx;top:%dpx'></div><div class='abs' style='left:%dpx;top:%dpx;right:%dpx'><div class='t' style='font-size:48px'>%s</div><div class='sm' style='margin-top:12px;font-size:36px'>%s</div></div>"
-              "<div class='abs' style='right:%dpx;top:%dpx'>%s</div>") % (M, M, y, M, y + 34, 240 if icn.endswith(".png") else 210, t, b, M, y + 52, ic(icn, 88, 1.25))
+        o += ("<div class='rule q' style='left:%dpx;right:%dpx;top:%dpx'></div>" % (M, M, y) if i else "") + ("<div class='abs' style='left:%dpx;top:%dpx;right:%dpx'><div class='t' style='font-size:48px'>%s</div><div class='sm' style='margin-top:12px;font-size:36px'>%s</div></div>"
+              "<div class='abs' style='right:%dpx;top:%dpx'>%s</div>") % (M, y + 34, 240 if icn.endswith(".png") else 210, t, b, M, y + 52, ic(icn, 88, 1.25))
     return o
 
 
