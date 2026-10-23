@@ -11,6 +11,8 @@ M = 72
 
 
 def ic(name, size=64, sw=1.5):
+    if name.endswith(".png"):  # a real brand mark from assets/ (e.g. "logo-xero.png") instead of a Lucide icon, true colour
+        return "<img src='%s%s' style='flex:none;display:block;height:%dpx;width:auto;max-width:%dpx;object-fit:contain'>" % (A, name, size, int(size * 1.6))
     s = re.sub(r"<!--.*?-->", "", open(ICONS + name + ".svg").read(), flags=re.S)
     s = re.sub(r'width="24"', 'width="%d"' % size, s, count=1)
     s = re.sub(r'height="24"', 'height="%d"' % size, s, count=1)
@@ -18,7 +20,7 @@ def ic(name, size=64, sw=1.5):
 
 
 def has_art(name):
-    return os.path.exists(os.path.join(W, "assets", name + ".png"))
+    return bool(name) and os.path.exists(os.path.join(W, "assets", name + ".png"))
 
 
 CSS = """
@@ -152,8 +154,8 @@ def limits(d):
     gap = d.get("gap") or max(200, min(290, (1290 - d["rows_top"]) // len(d["rows"])))
     for i, (icn, t, b) in enumerate(d["rows"]):
         y = d["rows_top"] + i * gap
-        o += ("<div class='rule' style='left:%dpx;right:%dpx;top:%dpx'></div><div class='abs' style='left:%dpx;top:%dpx;right:210px'><div class='t' style='font-size:48px'>%s</div><div class='sm' style='margin-top:12px;font-size:36px'>%s</div></div>"
-              "<div class='abs' style='right:%dpx;top:%dpx'>%s</div>") % (M, M, y, M, y + 34, t, b, M, y + 52, ic(icn, 88, 1.25))
+        o += ("<div class='rule' style='left:%dpx;right:%dpx;top:%dpx'></div><div class='abs' style='left:%dpx;top:%dpx;right:%dpx'><div class='t' style='font-size:48px'>%s</div><div class='sm' style='margin-top:12px;font-size:36px'>%s</div></div>"
+              "<div class='abs' style='right:%dpx;top:%dpx'>%s</div>") % (M, M, y, M, y + 34, 240 if icn.endswith(".png") else 210, t, b, M, y + 52, ic(icn, 88, 1.25))
     return o
 
 
@@ -212,11 +214,15 @@ def render(story):
             hp = os.path.join(W, "_tmp.html"); open(hp, "w").write(html)
             pg = br.new_page(viewport={"width": 1080, "height": 1440}); pg.goto("file://" + hp); pg.evaluate("document.fonts.ready"); pg.wait_for_timeout(300)
             assert pg.evaluate("document.fonts.check('510 40px Geist')"), "Geist did not load"
+            for src in pg.evaluate("Array.from(document.images).filter(i=>!i.naturalWidth).map(i=>i.getAttribute('src').split('/').pop())"):
+                print("  MISSING IMAGE", name, src, "(not in assets/: run get_logos.py or fetch_logo.py)")
             if kind == "source" and not (data or {}).get("w"):
                 pg.evaluate("""()=>{const fl=document.querySelector('.flow'), bx=fl.querySelector('.box'), im=bx.querySelector('img');
                     for(let k=0;k<3;k++){const w=bx.getBoundingClientRect().width, h=bx.getBoundingClientRect().height, r=(h-2)/(w-2);
                     const spare=1290-fl.getBoundingClientRect().bottom; const nw=Math.max(480,Math.min(936,w+spare/r));
                     bx.style.width=nw+'px'; bx.style.height=((nw-2)*r+2)+'px'; im.style.width=(nw-2)+'px';}}""")
+                sw = pg.evaluate("document.querySelector('.flow .box').getBoundingClientRect().width")
+                if sw < 700: print("  SMALL IMAGE", name, int(sw), "px wide: crop the screenshot tighter or shorten the text so it can grow")
             if kind == "bigfact":
                 pg.evaluate("""()=>{const f=document.querySelector('.bigflow'), fig=f.querySelector('.fig');
                     let fs=parseFloat(getComputedStyle(fig).fontSize);

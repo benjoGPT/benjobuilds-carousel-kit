@@ -9,7 +9,7 @@
       Trims and saves the chosen candidate as assets/logo-<name>.png (600px max, transparency kept).
 Use in the cover dict: mark="logo-<name>.png", mark_h=170. Note the logo's source URL in the posting notes.
 """
-import sys, os, io, json, re, glob, base64, urllib.request, urllib.parse
+import sys, os, io, json, re, glob, base64, subprocess, urllib.request, urllib.parse
 from PIL import Image, ImageDraw
 
 UA = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 Chrome/126 Safari/537.36"}
@@ -92,10 +92,9 @@ for u, s in sorted(cands, key=lambda c: -c[1]):
         print("skip", u[:80], str(e)[:50])
 slug = name.lower()
 if os.path.exists("node_modules/simple-icons/icons/%s.svg" % slug):
-    try:
-        os.system("python3 logo.py %s >/dev/null 2>&1" % slug)
-        got.append(("Simple Icons (single colour): " + slug, Image.open("assets/logo-%s.png" % slug).convert("RGBA")))
-    except Exception: pass
+    si = "assets/cand-%s-si.png" % name  # not assets/logo-<slug>.png: that may be the true-colour mark get_logos.py built
+    if subprocess.run([sys.executable, "logo.py", slug, si], capture_output=True).returncode == 0:
+        got.append(("Simple Icons (single colour): " + slug, Image.open(si).convert("RGBA")))
 
 if not got:
     print("NO CANDIDATES for", name, "- find the company's press/brand page and pass --url"); sys.exit(1)
