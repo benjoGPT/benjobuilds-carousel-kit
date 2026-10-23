@@ -72,9 +72,8 @@ ARTS = ["lake-pine", "stone-arch", "mountain-valley", "mountain-water", "lake-wa
 
 
 def cover(d):
-    # design B: both lines solid ink (outlined second lines read faintly on the grid)
     o = ("<div class='abs h' style='left:%dpx;top:176px;font-size:%dpx;white-space:nowrap'>%s</div>" % (M - 8, d.get("size", 164), d["line1"])
-         + "<div class='abs h' style='left:%dpx;top:%dpx;font-size:%dpx;white-space:nowrap'>%s</div>" % (M - 8, 176 + d.get("size", 164) + 6, d.get("size2", 140), d["line2"])
+         + "<div class='abs h out' style='left:%dpx;top:%dpx;font-size:%dpx'>%s</div>" % (M - 2, 176 + d.get("size", 164) + 6, d.get("size2", 140), d["line2"])
          + "<div class='abs' style='left:%dpx;top:570px;width:%dpx'><div class='b' style='font-size:42px'>%s</div>%s</div>" % (M, d.get("sf_width", 800), d["standfirst"],
             ("<img src='%s%s' style='display:block;margin-top:34px;height:%dpx;width:auto'>" % (A, d["logo"], d.get("logo_h", 64))) if d.get("logo") else ""))
     if d.get("mark"):  # the subject's icon (e.g. Google's G) sits in the open space to the right of the second headline line
@@ -173,7 +172,7 @@ def limits(d):
 def cta(d=None):
     d = d or {}
     s1 = d.get("size", 164); s2 = d.get("size2", 150)
-    o = ("<div class='abs h' style='left:%dpx;top:176px;font-size:%dpx;white-space:nowrap'>%s</div><div class='abs h' style='left:%dpx;top:%dpx;font-size:%dpx;white-space:nowrap'>%s</div>" % (M - 8, s1, d.get("line1", "Need a"), M - 8, 176 + s1 + 6, s2, d.get("line2", "website?"))
+    o = ("<div class='abs h' style='left:%dpx;top:176px;font-size:%dpx;white-space:nowrap'>%s</div><div class='abs h out' style='left:%dpx;top:%dpx;font-size:%dpx'>%s</div>" % (M - 8, s1, d.get("line1", "Need a"), M - 2, 176 + s1 + 6, s2, d.get("line2", "website?"))
          + "<div class='abs b' style='left:%dpx;top:560px;width:%dpx;font-size:42px'>%s</div>" % (M, d.get("body_width", 860), d.get("body", "I plan, design and build every website myself, for small businesses."))
          + "<div class='abs btn' style='left:%dpx;top:%dpx'>%s %s</div>" % (M, d.get("btn_top", 728), d.get("button", "Start a project"), ic("arrow-up-right", 34, 2))
          + "<div class='abs h' style='left:%dpx;top:%dpx;font-size:104px'>benjobuilds.com</div>" % (M - 4, d.get("btn_top", 728) + 128))
@@ -201,6 +200,7 @@ def bars(d):
 
 TYPES = {"cover": cover, "bigfact": bigfact, "process": process, "source": source, "stats": stats, "recap": recap, "limits": limits, "cta": cta, "bars": bars}
 INVERTED = {"bigfact", "cta"}
+RHYTHM = {"stats", "process", "limits", "recap", "bars"}; RHYTHM_GAP = 72; RHYTHM_END = 1330
 
 
 def _nb(v):
@@ -243,6 +243,18 @@ def render(story):
                     while((f.getBoundingClientRect().bottom>1000 || wide()) && fs>160){fs-=20; fig.style.fontSize=fs+'px';}
                     const g=980-f.getBoundingClientRect().bottom;
                     if(g>0){const st=f.children[1]; st.style.marginTop=(parseFloat(getComputedStyle(st).marginTop)+g*0.5)+'px';}}""")
+            if kind in RHYTHM:  # design B: same gap under every headline, rows spread evenly down to the same bottom line
+                pg.evaluate("""([gap,end])=>{const s=document.querySelector('.s'), kids=Array.from(s.children);
+                    const hd=kids.find(e=>e.classList.contains('h')&&e.getBoundingClientRect().top<320); if(!hd) return;
+                    const body=kids.filter(e=>e!==hd&&e.style.top&&!e.style.bottom&&parseFloat(e.style.top)>150);
+                    if(!body.length) return;
+                    const r=body.map(e=>e.getBoundingClientRect()), top0=Math.min(...r.map(x=>x.top));
+                    // the process slide's vertical line spans every row, so it can't be the last row: measure without it, redraw it after
+                    const li=r.reduce((a,x,i)=>!body[i].classList.contains('vr')&&(a<0||x.bottom>r[a].bottom)?i:a,-1), start=hd.getBoundingClientRect().bottom+gap;
+                    const span=r[li].top-top0; let k=span>0?(end-start-r[li].height)/span:1; k=Math.max(1,Math.min(1.5,k));
+                    body.forEach((e,i)=>{e.style.top=(start+(r[i].top-top0)*k)+'px';});
+                    const vr=body.find(e=>e.classList.contains('vr')), bx=Array.from(s.querySelectorAll('.box'));
+                    if(vr&&bx.length) vr.style.height=(Math.max(...bx.map(b=>b.getBoundingClientRect().bottom))-vr.getBoundingClientRect().top)+'px';}""", [RHYTHM_GAP, RHYTHM_END])
             if kind not in ("cover", "cta"):
                 bot = pg.evaluate("Math.max(...Array.from(document.querySelectorAll('.s > *:not(.eb), .s > * *')).map(e=>e.getBoundingClientRect().bottom))")
                 if bot > 1338: print("  OVERFLOW", name, int(bot))
