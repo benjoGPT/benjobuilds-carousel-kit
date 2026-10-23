@@ -236,6 +236,8 @@ def render(story):
             assert pg.evaluate("document.fonts.check('510 40px Geist')"), "Geist did not load"
             for src in pg.evaluate("Array.from(document.images).filter(i=>!i.naturalWidth).map(i=>i.getAttribute('src').split('/').pop())"):
                 print("  MISSING IMAGE", name, src, "(not in assets/: run get_logos.py or fetch_logo.py)")
+            if kind == "source":  # design B: the screenshot starts below the headline as rendered, however many lines it wraps to
+                pg.evaluate("()=>{const fl=document.querySelector('.flow'), hd=document.querySelector('.s > .h'); if(hd) fl.style.top=(hd.getBoundingClientRect().bottom+56)+'px';}")
             if kind == "source" and not (data or {}).get("w"):
                 pg.evaluate("""()=>{const fl=document.querySelector('.flow'), bx=fl.querySelector('.box'), im=bx.querySelector('img');
                     for(let k=0;k<3;k++){const w=bx.getBoundingClientRect().width, h=bx.getBoundingClientRect().height, r=(h-2)/(w-2);
