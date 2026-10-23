@@ -13,7 +13,10 @@ JS="""([st,en])=>{
  return [ra.top+scrollY, rb.bottom+scrollY];}"""
 with sync_playwright() as p:
     br=p.chromium.launch(); pg=br.new_page(viewport={"width":w,"height":900},device_scale_factor=3)
-    pg.goto(url,wait_until="networkidle",timeout=60000); pg.wait_for_timeout(1500)
+    pg.goto(url,wait_until="load",timeout=60000)
+    try: pg.wait_for_load_state("networkidle",timeout=15000)  # pages with polling/analytics never go idle: carry on after 15s
+    except Exception: print('page never went idle, carrying on')
+    pg.wait_for_timeout(1500)
     for sel in ["button:has-text('Reject')","button:has-text('Accept all')","button:has-text('Accept')","button:has-text('Necessary cookies only')","button:text-is('OK')"]:
         try:
             b=pg.locator(sel).first
