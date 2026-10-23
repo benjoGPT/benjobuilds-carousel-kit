@@ -226,7 +226,8 @@ def render(story):
             if kind == "bigfact":
                 pg.evaluate("""()=>{const f=document.querySelector('.bigflow'), fig=f.querySelector('.fig');
                     let fs=parseFloat(getComputedStyle(fig).fontSize);
-                    while(f.getBoundingClientRect().bottom>1000 && fs>240){fs-=20; fig.style.fontSize=fs+'px';}
+                    const wide=()=>{const r=document.createRange(); r.selectNodeContents(fig); return r.getBoundingClientRect().right>1008;};  // long figures ("11,334") ran off the right edge
+                    while((f.getBoundingClientRect().bottom>1000 || wide()) && fs>160){fs-=20; fig.style.fontSize=fs+'px';}
                     const g=980-f.getBoundingClientRect().bottom;
                     if(g>0){const st=f.children[1]; st.style.marginTop=(parseFloat(getComputedStyle(st).marginTop)+g*0.5)+'px';}}""")
             if kind not in ("cover", "cta"):
