@@ -17,7 +17,7 @@ Spacing on stats, process, limits, recap and bars is automatic (same gap under e
 
 Output: `out/<slug>/NN-<name>.png` (1080x1440) and `out/<slug>-contact-sheet.png`. Text strings can hold simple HTML (`<b>`, `<br>`). The last word is joined to the one before it automatically.
 
-`bigfact` and `cta` render inverted (blue background).
+`bigfact` and `cta` render inverted (blue background). The kit also turns one more slide blue: a screenshot, stats, limits, bars or recap slide near the middle that doesn't sit next to another blue slide and has no brand logos. Add `"blue": True` to a slide's data to choose it yourself, or `"blue": False` to rule one out.
 
 ## Slide types (required fields first, then optional with defaults)
 

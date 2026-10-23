@@ -40,11 +40,11 @@ html,body{width:1080px;height:1440px;background:var(--paper)}
 .sm{font-size:34px;line-height:1.38;letter-spacing:-0.015em;text-wrap:pretty}
 .num{font-variant-numeric:tabular-nums}
 .tint{background:#E5E7E7}
-.inv .tint{background:#2E66B0}
+.inv .tint{background:#3269B1}
 .st{font-weight:650}
-.rule{position:absolute;height:1px;background:var(--fg)}
-.rule.q{background:var(--line)}
-.vr{position:absolute;width:1px;background:var(--fg)}
+.rule{position:absolute;height:2px;background:var(--fg)}  /* design B: one divider style everywhere: 2px, solid ink, full content width */
+.rule.q{background:var(--fg)}
+.vr{position:absolute;width:2px;background:var(--fg)}
 .btn{display:inline-flex;align-items:center;gap:14px;background:var(--fg);color:var(--bg);font-weight:650;font-size:36px;padding:0 34px;height:88px;white-space:nowrap}
 .art{position:absolute;background-size:cover;background-repeat:no-repeat}
 .box{border:1px solid var(--fg)}
@@ -96,7 +96,7 @@ def cover(d):
 
 def bigfact(d):
     f = "".join("<div style='flex:1;%s'><div class='eb'>%s</div><div class='b' style='margin-top:14px'>%s</div></div>"
-                % ("padding-right:28px" if i == 0 else "border-left:1px solid var(--fg);padding-left:28px", a, b) for i, (a, b) in enumerate(d["facts"]))
+                % ("padding-right:28px" if i == 0 else "border-left:2px solid var(--fg);padding-left:28px", a, b) for i, (a, b) in enumerate(d["facts"]))
     size = d.get("size", 440)
     ctx = ("<div class='b' style='margin:30px 0 0 15px;font-size:44px;line-height:1.3;width:900px'>%s</div>" % d["context"]) if d.get("context") else ""
     return ("<div class='abs bigflow' style='left:%dpx;top:170px;width:960px'>" % (M - 18)
@@ -115,7 +115,7 @@ def process(d):
               "<div class='abs' style='left:232px;top:%dpx;right:%dpx'><div class='eb' style='opacity:.7'>Step %02d</div><div class='t' style='font-size:48px;margin-top:10px'>%s</div><div class='sm' style='margin-top:12px;font-size:36px'>%s</div></div>"
               % (M, y, ic(icn, 76, 1.5), y - 6, M, i + 1, t, b))
         if i < n - 1:
-            o += "<div class='rule q' style='left:232px;right:%dpx;top:%dpx'></div>" % (M, y + gap - 44)
+            o += "<div class='rule q' style='left:%dpx;right:%dpx;top:%dpx'></div>" % (M, M, y + gap - 44)
     return o
 
 
@@ -132,7 +132,7 @@ def source(d):
             + "<div class='abs flow' style='left:%dpx;top:%dpx;width:936px'>" % (M, top)
             + "<div class='box' style='width:%dpx;height:%dpx;overflow:hidden;background:#fff'><img src='%s%s.png' style='width:%dpx;display:block'></div>" % (w, h + 2, A, d["img"], w - 2)
             + "<div class='b' style='margin-top:34px;font-size:40px'>%s</div>" % d["body"]
-            + "".join("<div class='b' style='font-size:38px;line-height:1.3;padding:18px 0;border-top:1px solid var(--line);%s'>%s</div>"
+            + "".join("<div class='b' style='font-size:38px;line-height:1.3;padding:18px 0;border-top:2px solid var(--fg);%s'>%s</div>"
                       % ("margin-top:30px" if i == 0 else "", p) for i, p in enumerate(d.get("points", [])))
             + "<div class='sm' style='margin-top:22px;font-size:30px;opacity:.82'>%s</div></div>" % d["credit"])
 
@@ -144,7 +144,7 @@ def stats(d):
         y = top + i * gap
         o += ("<div class='rule' style='left:%dpx;right:%dpx;top:%dpx'></div>"
               "<div class='abs h num' style='left:%dpx;top:%dpx;height:%dpx;width:340px;display:flex;align-items:center;font-size:%dpx;letter-spacing:-.06em;white-space:nowrap'>%s</div>"
-              "<div class='vr' style='left:416px;top:%dpx;height:%dpx;background:var(--line)'></div>"
+              "<div class='vr' style='left:416px;top:%dpx;height:%dpx'></div>"
               "<div class='abs b' style='left:452px;right:%dpx;top:%dpx;height:%dpx;display:flex;align-items:center;font-size:40px;line-height:1.3'><div>%s</div></div>") % (
               M, M, y, M - 3, y, gap, d.get("fsize", 112), fig, y + 36, gap - 72, M, y, gap, txt)
     yb = top + n * gap
@@ -207,6 +207,18 @@ def bars(d):
 
 TYPES = {"cover": cover, "bigfact": bigfact, "process": process, "source": source, "stats": stats, "recap": recap, "limits": limits, "cta": cta, "bars": bars}
 INVERTED = {"bigfact", "cta"}
+BLUE_OK = {"source", "stats", "limits", "bars", "recap"}  # slide types that read well on blue (a white screenshot on blue looks framed)
+
+
+def _extra_blue(slides):
+    """Design B: one more blue slide per post. A slide can force it with "blue": True/False in its data; otherwise the kit picks the
+    text-only slide nearest the middle that doesn't touch another blue slide and has no brand logos (blue marks vanish on blue)."""
+    forced = {i for i, s in enumerate(slides) if (s[3] or {}).get("blue") is True}
+    if forced: return forced
+    blue = {i for i, s in enumerate(slides) if s[1] in INVERTED}
+    ok = [i for i, s in enumerate(slides) if s[1] in BLUE_OK and (s[3] or {}).get("blue") is not False
+          and not ({i - 1, i + 1} & blue) and ".png" not in repr(s[3])]
+    return {min(ok, key=lambda i: abs(i - (len(slides) - 1) / 2))} if ok else set()
 RHYTHM = {"stats", "process", "limits", "recap", "bars"}; RHYTHM_GAP = 72; RHYTHM_END = 1330
 
 
@@ -226,11 +238,12 @@ def render(story):
     total = len(story["slides"]); names = []
     with sync_playwright() as p:
         br = p.chromium.launch(args=["--allow-file-access-from-files"])
+        extra_blue = _extra_blue(story["slides"])
         for i, (name, kind, section, data) in enumerate(story["slides"]):
             if kind == "cover" and data is not None and "art" not in data:  # design B: vary the cover engraving post to post (stone-arch stays on the cta)
                 pool = [a for a in ARTS if a != "stone-arch"]; data = dict(data, art=pool[sum(map(ord, story["slug"])) % len(pool)])
             chip = kind in ("cover", "cta") and has_art((data or {}).get("art", "lake-pine" if kind == "cover" else "stone-arch"))
-            html = page(TYPES[kind](_nb(data) if data is not None else data), i + 1, total, section, inv=kind in INVERTED, foot_chip=chip)
+            html = page(TYPES[kind](_nb(data) if data is not None else data), i + 1, total, section, inv=kind in INVERTED or i in extra_blue, foot_chip=chip)
             hp = os.path.join(W, "_tmp.html"); open(hp, "w").write(html)
             pg = br.new_page(viewport={"width": 1080, "height": 1440}); pg.goto("file://" + hp); pg.evaluate("document.fonts.ready"); pg.wait_for_timeout(300)
             assert pg.evaluate("document.fonts.check('510 40px Geist')"), "Geist did not load"
