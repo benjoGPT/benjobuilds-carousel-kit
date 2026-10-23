@@ -32,12 +32,15 @@ html,body{width:1080px;height:1440px;background:var(--paper)}
    font-family:'Geist',sans-serif;font-weight:400;font-size:40px;line-height:1.38;-webkit-font-smoothing:antialiased}
 .s.inv{background:var(--blue);color:var(--paper);--fg:var(--paper);--bg:var(--blue)}
 .abs{position:absolute}
-.h{font-weight:510;letter-spacing:-0.055em;line-height:.98}
+.h{font-weight:510;letter-spacing:-0.055em;line-height:.98;text-wrap:balance}
 .out{font-weight:400;letter-spacing:.01em;line-height:1.08;color:var(--bg);-webkit-text-stroke:4px var(--fg);paint-order:stroke fill;white-space:nowrap}
 .eb{font-weight:720;font-size:23px;letter-spacing:.17em;text-transform:uppercase;line-height:1.25}
-.t{font-weight:540;letter-spacing:-0.04em;line-height:1.06}
-.b{font-size:40px;line-height:1.38}
-.sm{font-size:34px;line-height:1.38}
+.t{font-weight:540;letter-spacing:-0.04em;line-height:1.06;text-wrap:balance}
+.b{font-size:40px;line-height:1.38;letter-spacing:-0.015em;text-wrap:pretty}
+.sm{font-size:34px;line-height:1.38;letter-spacing:-0.015em;text-wrap:pretty}
+.num{font-variant-numeric:tabular-nums}
+.tint{background:#E5E7E7}
+.inv .tint{background:#2E66B0}
 .st{font-weight:650}
 .rule{position:absolute;height:1px;background:var(--fg)}
 .rule.q{background:var(--line)}
@@ -64,7 +67,10 @@ def art(name, x, y, w, h, pos="50% 50%"):
     return "<div class='art' style='left:%dpx;top:%dpx;width:%dpx;height:%dpx;background-image:url(%s%s.png);background-position:%s'></div>" % (x, y, w, h, A, name, pos)
 
 
-def head(text, size=96, top=178, width=936):
+HEAD = 92  # design B: one headline size on every content slide
+
+
+def head(text, size=HEAD, top=178, width=936):
     return "<div class='abs h' style='left:%dpx;top:%dpx;font-size:%dpx;width:%dpx'>%s</div>" % (M - 3, top, size, width, text)
 
 
@@ -78,7 +84,7 @@ def cover(d):
             ("<img src='%s%s' style='display:block;margin-top:34px;height:%dpx;width:auto'>" % (A, d["logo"], d.get("logo_h", 64))) if d.get("logo") else ""))
     if d.get("mark"):  # the subject's icon (e.g. Google's G) sits in the open space to the right of the second headline line
         s1 = d.get("size", 164); mh = d.get("mark_h", 190)
-        o += "<img src='%s%s' style='position:absolute;right:%dpx;top:%dpx;height:%dpx;width:auto'>" % (A, d["mark"], M + 10, 176 + s1 + 6 + int(d.get("size2", 140) * 0.85) - mh // 2, mh)
+        o += "<img class='mark' src='%s%s' style='position:absolute;right:%dpx;top:%dpx;height:%dpx;width:auto'>" % (A, d["mark"], M + 10, 176 + s1 + 6 + int(d.get("size2", 140) * 0.85) - mh // 2, mh)
     if has_art(d.get("art", "lake-pine")):
         return o + art(d.get("art", "lake-pine"), 0, 880, 1080, 560, d.get("art_pos", "50% 46%")) + "<div class='rule' style='left:0;right:0;top:880px'></div>"
     lab, l1, l2 = d["facts"]
@@ -105,9 +111,9 @@ def process(d):
     o = head(d["headline"]) + "<div class='vr' style='left:%dpx;top:440px;height:%dpx'></div>" % (M + 60, gap * (n - 1) + 120)
     for i, (icn, t, b) in enumerate(d["steps"]):
         y = 440 + i * gap
-        o += ("<div class='abs box' style='left:%dpx;top:%dpx;width:120px;height:120px;background:var(--bg);display:flex;align-items:center;justify-content:center'>%s</div>"
-              "<div class='abs' style='left:232px;top:%dpx;right:%dpx'><div class='t' style='font-size:46px'><span style='font-weight:400'>%02d /</span> %s</div><div class='sm' style='margin-top:12px;font-size:36px'>%s</div></div>"
-              % (M, y, ic(icn, 76, 1.5), y - 2, M, i + 1, t, b))
+        o += ("<div class='abs box tint' style='left:%dpx;top:%dpx;width:120px;height:120px;display:flex;align-items:center;justify-content:center'>%s</div>"
+              "<div class='abs' style='left:232px;top:%dpx;right:%dpx'><div class='eb' style='opacity:.7'>Step %02d</div><div class='t' style='font-size:48px;margin-top:10px'>%s</div><div class='sm' style='margin-top:12px;font-size:36px'>%s</div></div>"
+              % (M, y, ic(icn, 76, 1.5), y - 6, M, i + 1, t, b))
         if i < n - 1:
             o += "<div class='rule q' style='left:232px;right:%dpx;top:%dpx'></div>" % (M, y + gap - 44)
     return o
@@ -122,7 +128,7 @@ def source(d):
     text_h += sum(30 + 36 + math.ceil(len(plain(p)) / 46) * 50 for p in d.get("points", []))
     w = d.get("w") or int(max(560, min(936, (1300 - top - text_h) / ratio)))
     h = int((w - 2) * ratio)
-    return ((head(hl, 84) if hl else "")
+    return ((head(hl) if hl else "")
             + "<div class='abs flow' style='left:%dpx;top:%dpx;width:936px'>" % (M, top)
             + "<div class='box' style='width:%dpx;height:%dpx;overflow:hidden;background:#fff'><img src='%s%s.png' style='width:%dpx;display:block'></div>" % (w, h + 2, A, d["img"], w - 2)
             + "<div class='b' style='margin-top:34px;font-size:40px'>%s</div>" % d["body"]
@@ -133,13 +139,14 @@ def source(d):
 
 def stats(d):
     n = len(d["rows"]); top = d.get("top", 400); gap = d.get("gap") or max(180, min(270, (1210 - top) // n))
-    o = head(d["headline"], 84)
+    o = head(d["headline"])
     for i, (fig, txt) in enumerate(d["rows"]):
         y = top + i * gap
         o += ("<div class='rule' style='left:%dpx;right:%dpx;top:%dpx'></div>"
-              "<div class='abs h' style='left:%dpx;top:%dpx;height:%dpx;width:370px;display:flex;align-items:center;font-size:%dpx;letter-spacing:-.06em;white-space:nowrap'>%s</div>"
-              "<div class='abs b' style='left:452px;right:%dpx;top:%dpx;height:%dpx;display:flex;align-items:center;font-size:38px;line-height:1.32'><div>%s</div></div>") % (
-              M, M, y, M - 3, y, gap, d.get("fsize", 112), fig, M, y, gap, txt)
+              "<div class='abs h num' style='left:%dpx;top:%dpx;height:%dpx;width:340px;display:flex;align-items:center;font-size:%dpx;letter-spacing:-.06em;white-space:nowrap'>%s</div>"
+              "<div class='vr' style='left:416px;top:%dpx;height:%dpx;background:var(--line)'></div>"
+              "<div class='abs b' style='left:452px;right:%dpx;top:%dpx;height:%dpx;display:flex;align-items:center;font-size:40px;line-height:1.3'><div>%s</div></div>") % (
+              M, M, y, M - 3, y, gap, d.get("fsize", 112), fig, y + 36, gap - 72, M, y, gap, txt)
     yb = top + n * gap
     o += "<div class='rule' style='left:%dpx;right:%dpx;top:%dpx'></div>" % (M, M, yb)
     if d.get("note"): o += "<div class='abs sm' style='left:%dpx;top:%dpx;width:936px;font-size:30px;opacity:.82'>%s</div>" % (M, yb + 26, d["note"])
@@ -147,20 +154,20 @@ def stats(d):
 
 
 def recap(d):
-    o = head(d.get("headline", "The short version."), 104, 170)
+    o = head(d.get("headline", "The short version."))
     n = len(d["items"]); top = 350; gap = min(300, (1180 - top) // n)  # design B: no empty band under the headline
     for i, (t, b) in enumerate(d["items"]):
         y = top + i * gap
         o += ("<div class='rule' style='left:%dpx;right:%dpx;top:%dpx'></div><div class='abs h out' style='left:%dpx;top:%dpx;font-size:170px;line-height:1;letter-spacing:-.03em'>%d</div>"
               "<div class='abs' style='left:236px;top:%dpx;right:%dpx'><div class='t' style='font-size:54px'>%s</div><div class='b' style='margin-top:14px;font-size:38px'>%s</div></div>") % (M, M, y, M, y + 34, i + 1, y + 40, M, t, b)
     yb = top + n * gap
-    o += ("<div class='rule' style='left:%dpx;right:%dpx;top:%dpx'></div><div class='abs' style='left:%dpx;top:%dpx;display:flex;align-items:center;gap:16px'>%s"
-          "<div class='t' style='font-size:42px'>%s</div></div>") % (M, M, yb, M, yb + 44, ic("bookmark", 48, 1.5), d.get("save", "Save this for later."))
+    o += ("<div class='abs tint' style='left:%dpx;right:%dpx;top:%dpx;height:112px;display:flex;align-items:center;gap:18px;padding:0 32px'>%s"
+          "<div class='t' style='font-size:42px'>%s</div></div>") % (M, M, yb + 20, ic("bookmark", 46, 1.5), d.get("save", "Save this for later."))
     return o
 
 
 def limits(d):
-    o = head(d["headline"], d.get("size", 76)) + ("<div class='abs sm' style='left:%dpx;top:%dpx'>%s</div>" % (M, d["rows_top"] - 74, d["source"]) if d.get("source") else "")
+    o = head(d["headline"], d.get("size", HEAD)) + ("<div class='abs sm' style='left:%dpx;top:%dpx'>%s</div>" % (M, d["rows_top"] - 74, d["source"]) if d.get("source") else "")
     gap = d.get("gap") or max(200, min(290, (1290 - d["rows_top"]) // len(d["rows"])))
     for i, (icn, t, b) in enumerate(d["rows"]):
         y = d["rows_top"] + i * gap
@@ -184,7 +191,7 @@ def cta(d=None):
 
 
 def bars(d):
-    o = head(d["headline"], 84)
+    o = head(d["headline"])
     mx = d.get("max") or max(v for _, _, v in d["rows"]); top = d.get("top", 440); gap = d.get("gap", 200)
     for i, (lab, txt, v) in enumerate(d["rows"]):
         y = top + i * gap
@@ -254,7 +261,14 @@ def render(story):
                     const span=r[li].top-top0; let k=span>0?(end-start-r[li].height)/span:1; k=Math.max(1,Math.min(1.5,k));
                     body.forEach((e,i)=>{e.style.top=(start+(r[i].top-top0)*k)+'px';});
                     const vr=body.find(e=>e.classList.contains('vr')), bx=Array.from(s.querySelectorAll('.box'));
-                    if(vr&&bx.length) vr.style.height=(Math.max(...bx.map(b=>b.getBoundingClientRect().bottom))-vr.getBoundingClientRect().top)+'px';}""", [RHYTHM_GAP, RHYTHM_END])
+                    if(vr&&bx.length) vr.style.height=(Math.max(...bx.map(b=>b.getBoundingClientRect().bottom))-vr.getBoundingClientRect().top)+'px';
+                    else body.forEach((e,i)=>{if(e.classList.contains('vr')) e.style.height=(r[i].height*k)+'px';});}""", [RHYTHM_GAP, RHYTHM_END])
+            if kind == "cover":  # centre the subject's mark in the open space right of the second line, never touching it
+                pg.evaluate("""()=>{const m=document.querySelector('.mark'), l=document.querySelector('.out'); if(!m||!l) return;
+                    const rg=document.createRange(); rg.selectNodeContents(l); const lr=rg.getBoundingClientRect();
+                    const free=1008-(lr.right+48); const h=Math.min(m.getBoundingClientRect().height, free, lr.height*1.15);
+                    m.style.height=h+'px'; const w=m.getBoundingClientRect().width;
+                    m.style.right='auto'; m.style.left=(lr.right+48+(free-w)/2)+'px'; m.style.top=(lr.top+lr.height/2-h/2)+'px';}""")
             if kind not in ("cover", "cta"):
                 bot = pg.evaluate("Math.max(...Array.from(document.querySelectorAll('.s > *:not(.eb), .s > * *')).map(e=>e.getBoundingClientRect().bottom))")
                 if bot > 1338: print("  OVERFLOW", name, int(bot))

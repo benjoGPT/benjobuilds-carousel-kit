@@ -13,6 +13,8 @@ render({"slug": "my-slug", "slides": [
 ]})
 ```
 
+Spacing on stats, process, limits, recap and bars is automatic (same gap under every headline, rows spread to one bottom line): never pass `gap` or `top` on those.
+
 Output: `out/<slug>/NN-<name>.png` (1080x1440) and `out/<slug>-contact-sheet.png`. Text strings can hold simple HTML (`<b>`, `<br>`). The last word is joined to the one before it automatically.
 
 `bigfact` and `cta` render inverted (blue background).
@@ -28,7 +30,7 @@ Output: `out/<slug>/NN-<name>.png` (1080x1440) and `out/<slug>-contact-sheet.png
 | `stats` | `headline`, `rows` = [(figure, text), ...] | `top` (400), `gap` (auto), `fsize` (112), `note` |
 | `limits` | `headline`, `rows_top` (e.g. 420), `rows` = [(icon, title, body), ...] | `size` (76), `source` (line above the rows), `gap` (auto) |
 | `bars` | `headline`, `rows` = [(label, value text, number), ...] | `max`, `top` (440), `gap` (200), `note` |
-| `recap` | `items` = [(title, body), ...] (3) | `headline` ("The short version.") |
+| `recap` | `items` = [(title, body), ...] (3) | `headline` ("The short version."), `save` ("Save this for later.", a short line that fits the post) |
 | `cta` | none (pass `None` for defaults) | `line1` ("Need a"), `line2` ("website?"), `body`, `body_width` (860), `button` ("Start a project"), `btn_top` (728), `size` (164), `size2` (150), `art` ("stone-arch"), `art_pos` |
 
 **Icons:** a Lucide name (`"file-search"`, `"calendar"`, `"circle-alert"`; check one with `ls node_modules/lucide-static/icons/<name>.svg`) or a brand mark `"logo-<slug>.png"`.
