@@ -49,10 +49,13 @@ html,body{width:1080px;height:1440px;background:var(--paper)}
 
 
 def page(inner, n, total, section, inv=False, foot_chip=False):
-    chip = "background:var(--paper);color:var(--blue);padding:10px 14px;margin-left:-14px;" if foot_chip else ""
+    # design B: handle and page count sit on the header rule, top right; Instagram's tag avatars and dots cover the bottom-left corner
     chrome = ("<div class='abs eb' style='left:%dpx;top:78px'>%02d / %s</div><div class='rule' style='left:%dpx;right:%dpx;top:128px'></div>"
-              "<div class='abs eb' style='left:%dpx;bottom:56px;font-size:19px;font-weight:650;letter-spacing:.12em;%s'>@benjobuilds · %02d / %02d</div>"
-              % (M, n, section, M, M, M, chip, n, total))
+              "<div class='abs eb' style='right:%dpx;top:78px;font-weight:650;letter-spacing:.12em'>@benjobuilds · %02d / %02d</div>"
+              % (M, n, section, M, M, M, n, total))
+    if n == 1:  # swipe cue on the cover, a paper chip on the engraving band
+        chrome += ("<div class='abs eb' style='right:%dpx;bottom:56px;display:flex;align-items:center;gap:10px;background:var(--paper);padding:12px 16px'>Swipe %s</div>"
+                   % (M, ic("arrow-right", 28, 2)))
     return ("<!doctype html><html><head><meta charset='utf-8'><style>%s</style></head><body><div class='s%s'>%s%s</div></body></html>"
             % (CSS, " inv" if inv else "", inner, chrome))
 
@@ -65,9 +68,13 @@ def head(text, size=96, top=178, width=936):
     return "<div class='abs h' style='left:%dpx;top:%dpx;font-size:%dpx;width:%dpx'>%s</div>" % (M - 3, top, size, width, text)
 
 
+ARTS = ["lake-pine", "stone-arch", "mountain-valley", "mountain-water", "lake-waterfall", "faq-bridge"]
+
+
 def cover(d):
+    # design B: both lines solid ink (outlined second lines read faintly on the grid)
     o = ("<div class='abs h' style='left:%dpx;top:176px;font-size:%dpx;white-space:nowrap'>%s</div>" % (M - 8, d.get("size", 164), d["line1"])
-         + "<div class='abs h out' style='left:%dpx;top:%dpx;font-size:%dpx'>%s</div>" % (M - 2, 176 + d.get("size", 164) + 6, d.get("size2", 140), d["line2"])
+         + "<div class='abs h' style='left:%dpx;top:%dpx;font-size:%dpx;white-space:nowrap'>%s</div>" % (M - 8, 176 + d.get("size", 164) + 6, d.get("size2", 140), d["line2"])
          + "<div class='abs' style='left:%dpx;top:570px;width:%dpx'><div class='b' style='font-size:42px'>%s</div>%s</div>" % (M, d.get("sf_width", 800), d["standfirst"],
             ("<img src='%s%s' style='display:block;margin-top:34px;height:%dpx;width:auto'>" % (A, d["logo"], d.get("logo_h", 64))) if d.get("logo") else ""))
     if d.get("mark"):  # the subject's icon (e.g. Google's G) sits in the open space to the right of the second headline line
@@ -100,8 +107,8 @@ def process(d):
     for i, (icn, t, b) in enumerate(d["steps"]):
         y = 440 + i * gap
         o += ("<div class='abs box' style='left:%dpx;top:%dpx;width:120px;height:120px;background:var(--bg);display:flex;align-items:center;justify-content:center'>%s</div>"
-              "<div class='abs' style='left:232px;top:%dpx;right:%dpx'><div class='t' style='font-size:44px'><span style='font-weight:400'>%02d /</span> %s</div><div class='sm' style='margin-top:12px'>%s</div></div>"
-              % (M, y, ic(icn, 60), y - 2, M, i + 1, t, b))
+              "<div class='abs' style='left:232px;top:%dpx;right:%dpx'><div class='t' style='font-size:46px'><span style='font-weight:400'>%02d /</span> %s</div><div class='sm' style='margin-top:12px;font-size:36px'>%s</div></div>"
+              % (M, y, ic(icn, 76, 1.5), y - 2, M, i + 1, t, b))
         if i < n - 1:
             o += "<div class='rule q' style='left:232px;right:%dpx;top:%dpx'></div>" % (M, y + gap - 44)
     return o
@@ -142,10 +149,14 @@ def stats(d):
 
 def recap(d):
     o = head(d.get("headline", "The short version."), 104, 170)
+    n = len(d["items"]); top = 350; gap = min(300, (1180 - top) // n)  # design B: no empty band under the headline
     for i, (t, b) in enumerate(d["items"]):
-        y = 470 + i * 250
+        y = top + i * gap
         o += ("<div class='rule' style='left:%dpx;right:%dpx;top:%dpx'></div><div class='abs h out' style='left:%dpx;top:%dpx;font-size:170px;line-height:1;letter-spacing:-.03em'>%d</div>"
               "<div class='abs' style='left:236px;top:%dpx;right:%dpx'><div class='t' style='font-size:54px'>%s</div><div class='b' style='margin-top:14px;font-size:38px'>%s</div></div>") % (M, M, y, M, y + 34, i + 1, y + 40, M, t, b)
+    yb = top + n * gap
+    o += ("<div class='rule' style='left:%dpx;right:%dpx;top:%dpx'></div><div class='abs' style='left:%dpx;top:%dpx;display:flex;align-items:center;gap:16px'>%s"
+          "<div class='t' style='font-size:42px'>%s</div></div>") % (M, M, yb, M, yb + 44, ic("bookmark", 48, 1.5), d.get("save", "Save this for later."))
     return o
 
 
@@ -162,7 +173,7 @@ def limits(d):
 def cta(d=None):
     d = d or {}
     s1 = d.get("size", 164); s2 = d.get("size2", 150)
-    o = ("<div class='abs h' style='left:%dpx;top:176px;font-size:%dpx;white-space:nowrap'>%s</div><div class='abs h out' style='left:%dpx;top:%dpx;font-size:%dpx'>%s</div>" % (M - 8, s1, d.get("line1", "Need a"), M - 2, 176 + s1 + 6, s2, d.get("line2", "website?"))
+    o = ("<div class='abs h' style='left:%dpx;top:176px;font-size:%dpx;white-space:nowrap'>%s</div><div class='abs h' style='left:%dpx;top:%dpx;font-size:%dpx;white-space:nowrap'>%s</div>" % (M - 8, s1, d.get("line1", "Need a"), M - 8, 176 + s1 + 6, s2, d.get("line2", "website?"))
          + "<div class='abs b' style='left:%dpx;top:560px;width:%dpx;font-size:42px'>%s</div>" % (M, d.get("body_width", 860), d.get("body", "I plan, design and build every website myself, for small businesses."))
          + "<div class='abs btn' style='left:%dpx;top:%dpx'>%s %s</div>" % (M, d.get("btn_top", 728), d.get("button", "Start a project"), ic("arrow-up-right", 34, 2))
          + "<div class='abs h' style='left:%dpx;top:%dpx;font-size:104px'>benjobuilds.com</div>" % (M - 4, d.get("btn_top", 728) + 128))
@@ -209,6 +220,8 @@ def render(story):
     with sync_playwright() as p:
         br = p.chromium.launch(args=["--allow-file-access-from-files"])
         for i, (name, kind, section, data) in enumerate(story["slides"]):
+            if kind == "cover" and data is not None and "art" not in data:  # design B: vary the cover engraving post to post (stone-arch stays on the cta)
+                pool = [a for a in ARTS if a != "stone-arch"]; data = dict(data, art=pool[sum(map(ord, story["slug"])) % len(pool)])
             chip = kind in ("cover", "cta") and has_art((data or {}).get("art", "lake-pine" if kind == "cover" else "stone-arch"))
             html = page(TYPES[kind](_nb(data) if data is not None else data), i + 1, total, section, inv=kind in INVERTED, foot_chip=chip)
             hp = os.path.join(W, "_tmp.html"); open(hp, "w").write(html)
